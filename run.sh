@@ -30,19 +30,19 @@ now=$(date "+%Y%m%d%H%M%S")
 
 file_ext="gz"
 
-echo "Backing up MongoDB database '$database' and uploading to ${bucket_name}/${prefix}${now}-${filename}.${file_ext}"
+echo "Backing up MongoDB database '$DATABASE' and uploading to ${BUCKET_NAME}/${PREFIX}${now}-${FILENAME}.${file_ext}"
 
-mongodump --uri="$MONGO_URI" --db="$database" --archive | gzip \
-  | s3cmd put - "s3://${bucket_name}/${prefix}${now}-${filename}.${file_ext}"
+mongodump --uri="$MONGO_URI" --db="$DATABASE" --archive | gzip \
+  | s3cmd put - "s3://${BUCKET_NAME}/${PREFIX}${now}-${FILENAME}.${file_ext}"
 
 # Exit if no backup rotation is required
-if [ "$num_versions_to_keep" -eq 0 ]; then
+if [ "$NUM_VERSIONS_TO_KEEP" -eq 0 ]; then
   exit 0
 fi
 
 # List all files in the backup directory
-files=$(aws s3api list-objects --bucket "$bucket_name" \
-  --prefix "$prefix" \
+files=$(aws s3api list-objects --bucket "$BUCKET_NAME" \
+  --prefix "$PREFIX" \
   --query 'Contents[].{Key: Key}' \
   --output text)
 
@@ -51,9 +51,9 @@ echo "$files"
 echo "Removing older versions (if any)..."
 
 echo "$files" \
-  | grep -oP "^${prefix}[0-9]{14}-${filename}\.${file_ext}$" \
+  | grep -oP "^${PREFIX}[0-9]{14}-${FILENAME}\.${file_ext}$" \
   | sort -r \
-  | tail -n "+$((${num_versions_to_keep} + 1))" \
-  | xargs -I {} aws s3 rm "s3://${bucket_name}/{}"
+  | tail -n "+$((${NUM_VERSIONS_TO_KEEP} + 1))" \
+  | xargs -I {} aws s3 rm "s3://${BUCKET_NAME}/{}"
   
 echo "Backup rotation complete"
